@@ -199,13 +199,33 @@ export default function App() {
                     >
                       <FaDownload />
                     </button>
+                    {/* ⭐⭐⭐ 核心修改：Share Logic Update ⭐⭐⭐
+                        现在我们直接分享 '文件(File)' 而不是 '链接(URL)'
+                    */}
                     <button
-                      onClick={() => {
-                          if (navigator.share) {
-                            navigator.share({ title: "Cat", url: cat.originalUrl });
-                          } else {
-                            navigator.clipboard.writeText(cat.originalUrl);
-                            alert("Link copied!");
+                      onClick={async () => {
+                          try {
+                              // 1. 将 Blob 转换成 File 对象
+                              // 我们用 cat.blob 直接生成一个图片文件
+                              const file = new File([cat.blob], `cat_${cat.id}.jpg`, { 
+                                  type: cat.blob.type || 'image/jpeg' 
+                              });
+
+                              // 2. 检查浏览器是否支持分享文件 (大部分现代手机浏览器支持)
+                              if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                                  await navigator.share({
+                                      files: [file],
+                                      title: "Look at this cat!",
+                                      text: "I found this cute cat in Paws & Preferences!",
+                                  });
+                              } else {
+                                  // Fallback: 如果不支持文件分享（比如电脑浏览器），
+                                  // 我们只能复制链接，但提示用户链接是随机的
+                                  navigator.clipboard.writeText(cat.originalUrl);
+                                  alert("Link copied! (Note: Since this is a random cat generator, the link might show a different cat. Use mobile to share the actual image!)");
+                              }
+                          } catch (error) {
+                              console.log("Error sharing:", error);
                           }
                       }}
                       className="p-2 bg-white/20 rounded-full text-white hover:bg-white/40 transition-colors"
